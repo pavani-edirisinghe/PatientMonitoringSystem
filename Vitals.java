@@ -7,7 +7,7 @@ public class Vitals implements Serializable {
     double temperature;
     int heartRate;
     int oxygenLevel;
-    String message; // <--- NEW: The chat message
+    String message; 
 
     public Vitals(int id, double temp, int hr, int spo2, String msg) {
         this.patientId = id;
@@ -22,6 +22,6 @@ public class Vitals implements Serializable {
         return "ID: " + patientId + 
                " | HR: " + heartRate + 
                " | SpO2: " + oxygenLevel + "%" +
-               " | NOTE: " + message; // <--- Display the message
+               " | NOTE: " + message; 
     }
 }
