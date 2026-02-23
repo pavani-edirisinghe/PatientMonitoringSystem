@@ -1,0 +1,19 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Server (Doctor Terminal)",
+			"type": "shell",
+			"command": "java Server",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Client (Patient Terminal)",
+			"type": "shell",
+			"command": "java Client",
+			"isBackground": false,
+			"problemMatcher": []
+		}
+	]
+}

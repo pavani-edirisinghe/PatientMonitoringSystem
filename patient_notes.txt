@@ -1,0 +1,8 @@
+Patient Medical Notes
+====================
+
+Chief Complaint: Persistent cough for 3 days
+Temperature slightly elevated
+Mild fatigue reported
+
+Please review attached lab reports.
