@@ -11,6 +11,7 @@ function PatientDashboard() {
   const [patientId, setPatientId] = useState('');
   const [patientName, setPatientName] = useState('');
   const [isRegistered, setIsRegistered] = useState(false);
+  const [adviceHistory, setAdviceHistory] = useState([]);
   
   // Vitals state
   const [symptoms, setSymptoms] = useState('');
@@ -35,6 +36,12 @@ function PatientDashboard() {
 
     newSocket.on('disconnect', () => {
       setIsConnected(false);
+    });
+
+    // Listen for advice from the doctor
+    newSocket.on('receive-advice', (adviceData) => {
+      console.log('Received advice:', adviceData);
+      setAdviceHistory(prev => [adviceData, ...prev].slice(0, 20)); // Keep last 20
     });
 
     return () => {
@@ -197,106 +204,138 @@ function PatientDashboard() {
       </header>
 
       <div className="dashboard-content">
-        {/* Vitals Section */}
-        <div className="section vitals-control">
-          <h2>❤️ Vital Signs Monitor</h2>
-          
-          <div className="form-group">
-            <label>Current Symptoms:</label>
-            <textarea
-              value={symptoms}
-              onChange={(e) => setSymptoms(e.target.value)}
-              placeholder="Describe your symptoms (optional)"
-              rows="3"
-            />
+        {!isRegistered ? (
+          <div className="section registration-form">
+            <h2>Patient Registration</h2>
+            <form onSubmit={handleRegister}>
+              <div className="form-group">
+                <label>Patient ID:</label>
+                <input
+                  type="text"
+                  value={patientId}
+                  onChange={(e) => setPatientId(e.target.value)}
+                  placeholder="Enter your ID (e.g., 101)"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Name:</label>
+                <input
+                  type="text"
+                  value={patientName}
+                  onChange={(e) => setPatientName(e.target.value)}
+                  placeholder="Enter your name"
+                  required
+                />
+              </div>
+              <button type="submit">Register & Connect</button>
+            </form>
           </div>
+        ) : (
+          <>
+            {/* Vitals Control */}
+            <div className="section">
+              <h2>❤️ Vital Signs Monitor</h2>
+              
+              <div className="form-group">
+                <label>Current Symptoms:</label>
+                <textarea
+                  value={symptoms}
+                  onChange={(e) => setSymptoms(e.target.value)}
+                  placeholder="Describe your symptoms (optional)"
+                  rows="3"
+                />
+              </div>
 
-          <div className="vitals-controls">
-            <button onClick={sendVitals} className="send-btn" disabled={!isConnected}>
-              📤 Send Vitals Now
-            </button>
-            
-            <label className="auto-send-toggle">
-              <input
-                type="checkbox"
-                checked={autoSend}
-                onChange={(e) => setAutoSend(e.target.checked)}
-              />
-              Auto-send every 5 seconds
-            </label>
-          </div>
+              <div className="vitals-controls">
+                <button onClick={sendVitals} className="send-btn" disabled={!isConnected}>
+                  📤 Send Vitals Now
+                </button>
+                
+                <label className="auto-send-toggle">
+                  <input
+                    type="checkbox"
+                    checked={autoSend}
+                    onChange={(e) => setAutoSend(e.target.checked)}
+                  />
+                  Auto-send every 5 seconds
+                </label>
+              </div>
 
-          {autoSend && (
-            <div className="auto-send-indicator">
-              🔄 Auto-sending vitals...
-            </div>
-          )}
-        </div>
-
-        {/* File Upload Section */}
-        <div className="section file-upload-section">
-          <h2>📁 Upload Medical Files</h2>
-          <form onSubmit={handleFileUpload} className="upload-form">
-            <div className="form-group">
-              <label>Select File:</label>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileSelect}
-                accept=".pdf,.jpg,.jpeg,.png,.txt,.doc,.docx"
-              />
-              {selectedFile && (
-                <p className="selected-file">
-                  Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
-                </p>
+              {autoSend && (
+                <div className="auto-send-indicator">
+                  🔄 Auto-sending vitals...
+                </div>
               )}
             </div>
 
-            <div className="form-group">
-              <label>File Type:</label>
-              <select value={fileType} onChange={(e) => setFileType(e.target.value)}>
-                <option value="document">Document</option>
-                <option value="lab_report">Lab Report</option>
-                <option value="xray">X-Ray</option>
-                <option value="image">Medical Image</option>
-                <option value="prescription">Prescription</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
+            {/* File Upload Section */}
+            <div className="section file-upload-section">
+              <h2>📁 Upload Medical Files</h2>
+              <form onSubmit={handleFileUpload} className="upload-form">
+                <div className="form-group">
+                  <label>Select File:</label>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                    accept=".pdf,.jpg,.jpeg,.png,.txt,.doc,.docx"
+                  />
+                  {selectedFile && (
+                    <p className="selected-file">
+                      Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)} KB)
+                    </p>
+                  )}
+                </div>
 
-            <div className="form-group">
-              <label>Description:</label>
-              <textarea
-                value={fileDescription}
-                onChange={(e) => setFileDescription(e.target.value)}
-                placeholder="Describe this file..."
-                rows="2"
-                required
-              />
-            </div>
+                <div className="form-group">
+                  <label>File Type:</label>
+                  <select value={fileType} onChange={(e) => setFileType(e.target.value)}>
+                    <option value="document">Document</option>
+                    <option value="lab_report">Lab Report</option>
+                    <option value="xray">X-Ray</option>
+                    <option value="image">Medical Image</option>
+                    <option value="prescription">Prescription</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
 
-            <button type="submit" className="upload-btn" disabled={!selectedFile || !isConnected}>
-              ⬆️ Upload File
-            </button>
+                <div className="form-group">
+                  <label>Description:</label>
+                  <textarea
+                    value={fileDescription}
+                    onChange={(e) => setFileDescription(e.target.value)}
+                    placeholder="Describe this file..."
+                    rows="2"
+                    required
+                  />
+                </div>
 
-            {uploadProgress && (
-              <div className={`upload-status ${uploadProgress.includes('successful') ? 'success' : uploadProgress.includes('failed') ? 'error' : ''}`}>
-                {uploadProgress}
+                <button type="submit" className="upload-btn" disabled={!selectedFile || uploadProgress !== null}>
+                  {uploadProgress !== null ? `Uploading... ${uploadProgress}%` : 'Upload File'}
+                </button>
               </div>
-            )}
-          </form>
-        </div>
 
-        {/* Instructions */}
-        <div className="section info-section">
-          <h3>ℹ️ Instructions</h3>
-          <ul>
-            <li>Click "Send Vitals Now" to send your current health data to the doctor</li>
-            <li>Enable auto-send to continuously monitor your vitals</li>
-            <li>Upload medical documents, lab reports, or images for doctor review</li>
-            <li>Maximum file size: 10MB</li>
-          </ul>
-        </div>
+              {/* Doctor's Advice Section */}
+              <div className="section">
+                <h2>Doctor's Advice</h2>
+                <div className="advice-history">
+                  {adviceHistory.length === 0 ? (
+                    <p className="empty-state">No advice received yet.</p>
+                  ) : (
+                    adviceHistory.map((item, index) => (
+                      <div key={index} className="advice-card">
+                        <p><strong>Advice:</strong> {item.advice}</p>
+                        <p><strong>Prescription:</strong> {item.prescription}</p>
+                        <small>Received: {new Date(item.timestamp).toLocaleString()}</small>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ function DoctorDashboard() {
   const [vitalsHistory, setVitalsHistory] = useState([]);
   const [fileHistory, setFileHistory] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [adviceForms, setAdviceForms] = useState({});
 
   useEffect(() => {
     // Initialize socket connection
@@ -57,6 +58,34 @@ function DoctorDashboard() {
     return () => newSocket.close();
   }, []);
 
+  const handleAdviceChange = (patientSocketId, field, value) => {
+    setAdviceForms(prev => ({
+      ...prev,
+      [patientSocketId]: {
+        ...prev[patientSocketId],
+        [field]: value
+      }
+    }));
+  };
+
+  const sendAdvice = (patientSocketId) => {
+    if (socket && adviceForms[patientSocketId]) {
+      const adviceData = {
+        patientSocketId: patientSocketId,
+        advice: adviceForms[patientSocketId].advice || '',
+        prescription: adviceForms[patientSocketId].prescription || '',
+        timestamp: new Date().toISOString()
+      };
+      socket.emit('send-advice', adviceData);
+      console.log('Sent advice:', adviceData);
+      // Clear the form after sending
+      setAdviceForms(prev => ({
+        ...prev,
+        [patientSocketId]: { advice: '', prescription: '' }
+      }));
+    }
+  };
+
   const getVitalStatus = (vitals) => {
     const warnings = [];
     if (vitals.heartRate > 100) warnings.push('High HR');
@@ -89,6 +118,19 @@ function DoctorDashboard() {
                     <strong>Patient ID: {patient.patientId}</strong>
                     <span>{patient.name}</span>
                     <small>Connected: {new Date(patient.connectedAt).toLocaleTimeString()}</small>
+                  </div>
+                  <div className="advice-form">
+                    <textarea
+                      placeholder="Enter advice..."
+                      value={adviceForms[patient.socketId]?.advice || ''}
+                      onChange={(e) => handleAdviceChange(patient.socketId, 'advice', e.target.value)}
+                    />
+                    <textarea
+                      placeholder="Enter prescription..."
+                      value={adviceForms[patient.socketId]?.prescription || ''}
+                      onChange={(e) => handleAdviceChange(patient.socketId, 'prescription', e.target.value)}
+                    />
+                    <button onClick={() => sendAdvice(patient.socketId)}>Send Advice</button>
                   </div>
                 </div>
               ))

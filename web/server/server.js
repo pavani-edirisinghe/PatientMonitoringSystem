@@ -100,6 +100,17 @@ io.on('connection', (socket) => {
     });
   });
 
+  // Handle advice from doctor
+  socket.on('send-advice', (adviceData) => {
+    console.log('Received advice:', adviceData);
+    const patientSocket = io.sockets.sockets.get(adviceData.patientSocketId);
+    if (patientSocket) {
+      patientSocket.emit('receive-advice', adviceData);
+    } else {
+      console.log('Could not find patient socket:', adviceData.patientSocketId);
+    }
+  });
+
   // Handle file transfer notification
   socket.on('file-uploaded', (fileData) => {
     console.log('File uploaded:', fileData);
