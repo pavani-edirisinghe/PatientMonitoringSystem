@@ -7,7 +7,7 @@ import java.util.Scanner;
 public class Client {
     public static void main(String[] args) {
         // IMPORTANT: Replace "localhost" with the IP address of the server laptop.
-        String serverAddress = "10.250.40.34"; // Changed for local testing
+        String serverAddress = "localhost"; // Changed for local testing
         int port = 9090;
         int patientId = 101;
 

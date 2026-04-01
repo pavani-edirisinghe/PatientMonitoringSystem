@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -52,6 +52,26 @@ function PatientDashboard() {
     };
   }, []);
 
+  // Use useCallback to prevent unnecessary re-renders and fix the ESLint warning
+  const generateVitals = useCallback(() => {
+    return {
+      patientId: patientId,
+      heartRate: 60 + Math.floor(Math.random() * 50),
+      oxygenLevel: 90 + Math.floor(Math.random() * 10),
+      temperature: 36.0 + (Math.random() * 2.0),
+      symptoms: symptoms,
+      timestamp: new Date().toISOString()
+    };
+  }, [patientId, symptoms]);
+
+  const sendVitals = useCallback(() => {
+    if (socket && isRegistered) {
+      const vitalsData = generateVitals();
+      socket.emit('send-vitals', vitalsData);
+      console.log('Sent vitals:', vitalsData);
+    }
+  }, [socket, isRegistered, generateVitals]);
+
   useEffect(() => {
     if (autoSend && isRegistered) {
       intervalRef.current = setInterval(() => {
@@ -68,32 +88,13 @@ function PatientDashboard() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [autoSend, isRegistered]);
+  }, [autoSend, isRegistered, sendVitals]);
 
   const handleRegister = (e) => {
     e.preventDefault();
     if (patientId && patientName && socket) {
       socket.emit('patient-join', { patientId, name: patientName });
       setIsRegistered(true);
-    }
-  };
-
-  const generateVitals = () => {
-    return {
-      patientId: patientId,
-      heartRate: 60 + Math.floor(Math.random() * 50),
-      oxygenLevel: 90 + Math.floor(Math.random() * 10),
-      temperature: 36.0 + (Math.random() * 2.0),
-      symptoms: symptoms,
-      timestamp: new Date().toISOString()
-    };
-  };
-
-  const sendVitals = () => {
-    if (socket && isRegistered) {
-      const vitalsData = generateVitals();
-      socket.emit('send-vitals', vitalsData);
-      console.log('Sent vitals:', vitalsData);
     }
   };
 
@@ -108,6 +109,47 @@ function PatientDashboard() {
     }
   };
 
+  // Newly added function to handle the form submission and clear the ESLint errors
+  const handleFileUpload = async (e) => {
+    e.preventDefault();
+    if (!selectedFile) return;
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('patientId', patientId);
+    formData.append('fileType', fileType);
+    formData.append('description', fileDescription);
+
+    try {
+      setUploadProgress(0);
+      
+      // Makes a post request to a standard upload endpoint using axios
+      await axios.post(`${SERVER_URL}/api/upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          setUploadProgress(percentCompleted);
+        },
+      });
+
+      alert('File uploaded successfully!');
+      
+      // Reset form states after successful upload
+      setSelectedFile(null);
+      setFileDescription('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      alert('Failed to upload the file. Please try again.');
+    } finally {
+      setUploadProgress(null);
+    }
+  };
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -116,7 +158,8 @@ function PatientDashboard() {
         {isRegistered && (
           <>
             <div className="patient-id-badge">Patient {patientId} - {patientName}</div>
-            <div className={`status-indicator ${isCocnnected ? 'connected' : 'disconnected'}`}>
+            {/* Fixed typo from isCocnnected to isConnected below */}
+            <div className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}>
               {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
             </div>
           </>
@@ -234,27 +277,27 @@ function PatientDashboard() {
                 <button type="submit" className="upload-btn" disabled={!selectedFile || uploadProgress !== null}>
                   {uploadProgress !== null ? `Uploading... ${uploadProgress}%` : 'Upload File'}
                 </button>
-                </form>
-              </div>
+              </form>
+            </div>
 
-              {/* Doctor's Advice Section */}
-              <div className="section">
-                <h2>Doctor's Advice</h2>
-                <div className="advice-history">
-                  {adviceHistory.length === 0 ? (
-                    <p className="empty-state">No advice received yet.</p>
-                  ) : (
-                    adviceHistory.map((item, index) => (
-                      <div key={index} className="advice-card">
-                        <p><strong>Advice:</strong> {item.advice}</p>
-                        <p><strong>Prescription:</strong> {item.prescription}</p>
-                        <small>Received: {new Date(item.timestamp).toLocaleString()}</small>
-                      </div>
-                    ))
-                  )}
-                </div>
+            {/* Doctor's Advice Section */}
+            <div className="section">
+              <h2>Doctor's Advice</h2>
+              <div className="advice-history">
+                {adviceHistory.length === 0 ? (
+                  <p className="empty-state">No advice received yet.</p>
+                ) : (
+                  adviceHistory.map((item, index) => (
+                    <div key={index} className="advice-card">
+                      <p><strong>Advice:</strong> {item.advice}</p>
+                      <p><strong>Prescription:</strong> {item.prescription}</p>
+                      <small>Received: {new Date(item.timestamp).toLocaleString()}</small>
+                    </div>
+                  ))
+                )}
               </div>
-            
+            </div>
+          
           </>
         )}
       </div>

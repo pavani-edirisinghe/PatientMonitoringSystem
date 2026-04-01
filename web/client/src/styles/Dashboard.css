@@ -1,2 +1,141 @@
 /* Dashboard specific styles - imported by Dashboard components */
 @import './App.css';
+
+/* --- Patient Card Container --- */
+.patient-card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease;
+}
+
+.patient-card:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* --- Patient Info Section --- */
+.patient-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.patient-info strong {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.patient-info span {
+  color: white;
+}
+
+.patient-info small {
+  color: white;
+  font-size: 0.85rem;
+}
+
+/* --- Advice Form & Inputs --- */
+.advice-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.advice-form textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 70px;
+  background-color: #fcfcfc;
+  transition: all 0.2s ease;
+}
+
+/* Highlight the textarea when the doctor clicks inside it */
+.advice-form textarea:focus {
+  outline: none;
+  background-color: #ffffff;
+  border-color: #007bff; /* Medical Blue */
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+
+/* --- Send Advice Button --- */
+.advice-form button {
+  background-color: #007bff; /* Medical Blue */
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-end; /* Pushes the button to the right side */
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.advice-form button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.advice-form button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* --- Patient Registration Button --- */
+.registration-form button[type="submit"] {
+  background-color: #28a745; /* Reassuring Health Green */
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%; /* Makes the button span the full width of the form */
+  margin-top: 15px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
+}
+
+.registration-form button[type="submit"]:hover {
+  background-color: #218838; /* Slightly darker green on hover */
+  transform: translateY(-2px); /* Lifts the button up slightly */
+  box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
+}
+
+.registration-form button[type="submit"]:active {
+  transform: translateY(0); /* Pushes back down when clicked */
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+}
+
+/* Optional: Style the input fields above the button to match */
+.registration-form input {
+  width: 100%;
+  padding: 12px 15px;
+  margin-bottom: 15px;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: border-color 0.2s ease;
+}
+
+.registration-form input:focus {
+  outline: none;
+  border-color: #28a745;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15);
+}
