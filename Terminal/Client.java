@@ -2,23 +2,47 @@ import java.io.*;
 import java.net.*;
 import java.nio.file.Files;
 import java.util.Random;
-import java.util.Scanner; 
+import java.util.Scanner;
 
 public class Client {
     public static void main(String[] args) {
         // IMPORTANT: Replace "localhost" with the IP address of the server laptop.
-        String serverAddress = "172.29.9.34";
-        int port = 9090; 
+        String serverAddress = "localhost"; // Changed for local testing
+        int port = 9090;
         int patientId = 101;
 
         try (Socket socket = new Socket(serverAddress, port);
-             Scanner scanner = new Scanner(System.in)) {
-            
+                Scanner scanner = new Scanner(System.in)) {
+
             System.out.println("Connected to Doctor! Patient ID: " + patientId);
             System.out.println("================================================");
 
             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
+            ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
             Random rand = new Random();
+
+            // Start a new thread to listen for messages from the server
+            Thread serverListener = new Thread(() -> {
+                try {
+                    while (true) {
+                        Object receivedObj = in.readObject();
+                        if (receivedObj instanceof DoctorAdvice) {
+                            System.out.println("\n\n--- DOCTOR'S RESPONSE ---");
+                            System.out.println(receivedObj);
+                            System.out.println("-------------------------\n");
+                            System.out.print("Choose option: "); // Re-display prompt
+                        }
+                    }
+                } catch (EOFException e) {
+                    System.out.println("\nConnection to doctor lost.");
+                } catch (Exception e) {
+                    // Handle exceptions without crashing
+                    if (!socket.isClosed()) {
+                        System.out.println("\nError receiving data: " + e.getMessage());
+                    }
+                }
+            });
+            serverListener.start();
 
             while (true) {
                 System.out.println("\n--- Patient Menu ---");
@@ -26,7 +50,7 @@ public class Client {
                 System.out.println("2. Send Medical File");
                 System.out.println("3. Exit");
                 System.out.print("Choose option: ");
-                
+
                 String choice = scanner.nextLine();
 
                 if (choice.equals("1")) {
@@ -46,13 +70,14 @@ public class Client {
         }
     }
 
-    private static void sendVitals(ObjectOutputStream out, Scanner scanner, Random rand, int patientId) throws IOException {
+    private static void sendVitals(ObjectOutputStream out, Scanner scanner, Random rand, int patientId)
+            throws IOException {
         int hr = 60 + rand.nextInt(50);
         double temp = 36.0 + (rand.nextDouble() * 2.0);
         int spo2 = 90 + rand.nextInt(10);
 
         System.out.print("Enter symptom (or press Enter to skip): ");
-        String note = scanner.nextLine(); 
+        String note = scanner.nextLine();
 
         Vitals currentVitals = new Vitals(patientId, temp, hr, spo2, note);
         out.writeObject(currentVitals);
@@ -87,12 +112,11 @@ public class Client {
         byte[] fileContent = Files.readAllBytes(file.toPath());
 
         FileTransferData fileData = new FileTransferData(
-            patientId, 
-            file.getName(), 
-            fileContent, 
-            fileType, 
-            description
-        );
+                patientId,
+                file.getName(),
+                fileContent,
+                fileType,
+                description);
 
         out.writeObject(fileData);
         out.flush();
