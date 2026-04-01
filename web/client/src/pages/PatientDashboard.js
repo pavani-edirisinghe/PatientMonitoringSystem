@@ -108,99 +108,19 @@ function PatientDashboard() {
     }
   };
 
-  const handleFileUpload = async (e) => {
-    e.preventDefault();
-    
-    if (!selectedFile) {
-      alert('Please select a file');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-    formData.append('patientId', patientId);
-    formData.append('fileType', fileType);
-    formData.append('description', fileDescription);
-
-    try {
-      setUploadProgress('Uploading...');
-      const response = await axios.post(`${SERVER_URL}/api/upload`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      if (response.data.success) {
-        setUploadProgress('Upload successful!');
-        
-        // Notify via socket
-        socket.emit('file-uploaded', response.data.file);
-        
-        // Reset form
-        setSelectedFile(null);
-        setFileDescription('');
-        setFileType('document');
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-        
-        setTimeout(() => setUploadProgress(null), 3000);
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      setUploadProgress('Upload failed!');
-      setTimeout(() => setUploadProgress(null), 3000);
-    }
-  };
-
-  if (!isRegistered) {
-    return (
-      <div className="dashboard">
-        <header className="dashboard-header">
-          <Link to="/" className="back-btn">← Back</Link>
-          <h1>🤒 Patient Dashboard</h1>
-        </header>
-        <div className="registration-form">
-          <h2>Patient Registration</h2>
-          <form onSubmit={handleRegister}>
-            <div className="form-group">
-              <label>Patient ID:</label>
-              <input
-                type="text"
-                value={patientId}
-                onChange={(e) => setPatientId(e.target.value)}
-                placeholder="Enter your ID (e.g., 101)"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Name:</label>
-              <input
-                type="text"
-                value={patientName}
-                onChange={(e) => setPatientName(e.target.value)}
-                placeholder="Enter your name"
-                required
-              />
-            </div>
-            <button type="submit" className="submit-btn" disabled={!isConnected}>
-              {isConnected ? 'Connect to Doctor' : 'Connecting...'}
-            </button>
-          </form>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="dashboard">
       <header className="dashboard-header">
         <Link to="/" className="back-btn">← Back</Link>
         <h1>🤒 Patient Dashboard</h1>
-        <div className="patient-id-badge">Patient {patientId} - {patientName}</div>
-        <div className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`}>
-          {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
-        </div>
+        {isRegistered && (
+          <>
+            <div className="patient-id-badge">Patient {patientId} - {patientName}</div>
+            <div className={`status-indicator ${isCocnnected ? 'connected' : 'disconnected'}`}>
+              {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
+            </div>
+          </>
+        )}
       </header>
 
       <div className="dashboard-content">
@@ -314,6 +234,7 @@ function PatientDashboard() {
                 <button type="submit" className="upload-btn" disabled={!selectedFile || uploadProgress !== null}>
                   {uploadProgress !== null ? `Uploading... ${uploadProgress}%` : 'Upload File'}
                 </button>
+                </form>
               </div>
 
               {/* Doctor's Advice Section */}
@@ -333,7 +254,7 @@ function PatientDashboard() {
                   )}
                 </div>
               </div>
-            </div>
+            
           </>
         )}
       </div>
